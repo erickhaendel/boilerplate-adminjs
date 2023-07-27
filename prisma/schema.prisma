@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                           String     @id @default(cuid())
+  name                         String?
+  email                        String?    @unique
+  password                     String?
+  phone                        String?
+  cpf                          String?    @unique
+  cnpj                         String?    @unique
+  recoveryPasswordToken        String?    @map("recovery_password_token")
+  recoveryPasswordTokenExpires DateTime?  @map("recovery_password_token_expires")
+  isPartner                    Boolean?   @default(false) @map(name: "is_partner")
+  isVerified                   Boolean?   @default(false) @map(name: "is_verified")
+  isBlocked                    Boolean?   @default(false) @map(name: "is_blocked")
+  isDeleted                    Boolean?   @default(false) @map(name: "is_deleted")
+  isAdmin                      Boolean?   @default(false) @map(name: "is_admin")
+  createdAt                    DateTime   @default(now()) @map(name: "created_at")
+  updatedAt                    DateTime   @updatedAt @map(name: "updated_at")
+  HistoricsSearch              Historic[] @relation("HistoricSearch")
+  HistoricsOfMe                Historic[] @relation("HistoricOfMe")
+  Documents                    Document[]
+
+  @@map(name: "users")
+}
+
+model Historic {
+  id            String   @id @default(cuid())
+  score         Int?
+  UserCreated   User?    @relation("HistoricSearch", fields: [userId], references: [id], map: "user_created_id_historic")
+  userCreatedId String?  @map(name: "user_created_id")
+  User          User?    @relation("HistoricOfMe", fields: [userId], references: [id])
+  userId        String?  @map(name: "user_id")
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @updatedAt @map(name: "updated_at")
+
+  @@map(name: "historics")
+}
+
+model Document {
+  id        String        @id @default(cuid())
+  name      String?
+  type      DocumentType? @default(CPF)
+  url       String?
+  userId    String?       @map(name: "user_id")
+  User      User?         @relation(fields: [userId], references: [id])
+  createdAt DateTime      @default(now()) @map(name: "created_at")
+  updatedAt DateTime      @updatedAt @map(name: "updated_at")
+
+  @@map(name: "documents")
+}
+
+enum DocumentType {
+  CPF
+  RG
+  CNH
+  CNPJ
+}
